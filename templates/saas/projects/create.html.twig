@@ -1,0 +1,141 @@
+{% extends "saas/sass-layout.html.twig" %}
+
+{% block title %}GoGoCarto - Des cartes à GoGo{% endblock %}
+
+{% block body %}
+  <h1>Créer un projet</h1>
+
+  <div class="top-form-message">
+    {{ config.saas.newProjectInstructions|raw }}
+  </div>
+
+  <section class="project-create">
+
+    {{ form_start(form, {'id': 'project-form'}) }}
+
+    <div class="row">
+      <h2>Nom du projet</h2>
+      {# NAME #}
+      {{ form_errors(form.name) }}
+      <div class="input-field col s12">
+        <i class="material-icons gogo-icon-description prefix"></i>
+        {{ form_widget(form.name, {'id': 'input-name',
+                                   'attr': {'class': 'validate required', 'length':'80'}}) }}
+        <label for="input-name" class="gogo-form-label" data-error="Oups, ce nom est trop long !">Nom du projet</label>
+      </div>
+
+      {# DOMAIN #}
+      {{ form_errors(form.domainName, {'class': 'form-error'}) }}
+      <div class="input-field col s12">
+        <i class="material-icons gogo-icon-internet prefix"></i>
+        {{ form_widget(form.domainName, {'id': 'input-domain',
+                                   'attr': {'class': 'validate required', 'length':'80'}}) }}
+        <label for="input-domain" class="gogo-form-label" data-error="">Nom du domaine <i>( ****.{{ base_url }} )</i></label>
+      </div>
+
+      <div class="col s12 contrib-config-section">
+        {# CONTRIBUTION_CONFIG #}
+        <h2>Ouverture à la contribution publique</h2>
+        <p id="please-choose-contribution" class="error-label" style="display:none">Veuillez choisir une option</p>
+        {% set contribOptions = [
+            ['open', 'Ouvert', 'Tous les utilisateurs peuvent ajouter/modifier/supprimer librement'],
+            ['intermediate', 'Intermédiaire', 'Tous les utilisateurs peuvent contribuer, mais les contributions doivent être modérées par des administrateurs'],
+            ['closed', 'Fermé', 'Seuls les administrateurs peuvent contribuer'],
+            ['inherit', 'Défaut', 'Utiliser les paramètres par défaut de ' ~ base_url]
+          ]
+        %}
+        {% for option in contribOptions %}
+           <p>
+            <input name="contrib" type="radio" id="contribOption{{ loop.index }}" value="{{option[0]}}" />
+            <label class="contrib-option" for="contribOption{{ loop.index }}">{{ option[1] }} <span class="hint">- {{ option[2] }}</span></label>
+          </p>
+        {% endfor %}
+      </div>
+
+      {% if config.saas.endUserLicenceAgreement %}
+        <div class="col s12 cgu-config-section">
+          {# CONTRIBUTION_CONFIG #}
+          <h2>Conditions d'utilisation</h2>
+          <div class="cgu-content">
+            {{ config.saas.endUserLicenceAgreement|raw}}
+          </div>
+          <p class="cgu-checkbox-container">
+            <input name="accept-cgu" type="checkbox" id="accept-cgu" class="required" />
+            <label for="accept-cgu">J'accepte les conditions générales d'utilisation</label>
+          </p>
+        </div>
+      {% endif %}
+    </div>
+
+    <button class="btn" type="submit" onclick="performSubmit(event);">Créer</button>
+
+    <div class="overlay">
+      <div class="overlay-content">
+        <div class="message">Votre projet est en cours de création, veuillez patienter...</div>
+        {% include 'directory/components/spinner-loader.html.twig' with {'id': 'create-project-loader' }%}
+      </div>
+    </div>
+
+    {{ form_rest(form) }}
+
+    {{ form_end(form) }}
+  </section>
+{% endblock %}
+
+{% block javascripts %}
+  <script>
+    var timer;
+    $('#input-domain').on("keyup", function(e) {
+      clearTimeout(timer);
+      timer = setTimeout(function() { slugifyDomain(); }, 200);
+    });
+
+    function performSubmit(e) {
+      $('.required').each(function() {
+        if (!$(this).val()) $(this).addClass('error');
+        else $(this).removeClass('error');
+      });
+
+      $('label[for="accept-cgu"]').toggleClass('error-label', !$('#accept-cgu').is(':checked'));
+
+      if ($('input[name=contrib]:checked').length == 0) {
+        $('#please-choose-contribution').show();
+        e.preventDefault();
+      } else if ($('.error').length == 0) {
+        showWaitingMessage();
+        slugifyDomain();
+        $('form').submit();
+      }
+    }
+
+    function showWaitingMessage() {
+      $("button[type=submit]").prop('disabled', true);
+      $('.overlay').show();
+    }
+
+    function slugifyDomain() { $('#input-domain').val(slugify($('#input-domain').val())); }
+
+    function slugify(text)
+    {
+      if (!text) return '';
+      var from = "ãàáäâẽèéëêìíïîõòóöôùúüûñç·/_,:;";
+      var to   = "aaaaaeeeeeiiiiooooouuuunc------";
+      for (var i = 0, len = from.length; i < len; i++)
+      {
+        text = text.replace(new RegExp(from.charAt(i), 'g'), to.charAt(i));
+      }
+      var result = text
+          .toString()                     // Cast to string
+          .toLowerCase()                  // Convert the string to lowercase letters
+          .trim()                         // Remove whitespace from both sides of a string
+          .replace(/\s+/g, '-')           // Replace spaces with -
+          .replace(/&/g, 'et')            // Replace & with 'and'
+          .replace(/[^\w\-]+/g, '')       // Remove all non-word chars
+          .replace(/\-\-+/g, '-')         // Replace multiple - with single -
+          .replace(/^-|-$/g, '');        // Remove beginning and ending -
+       if ($.inArray(result, ['dev', 'test', 'demo', 'carto', 'carto-dev', 'www', 'gogocarto_default']) !== -1) result += "_1";
+       result = result.slice(0,30); // limit number of characters
+       return result;
+    }
+  </script>
+{% endblock %}

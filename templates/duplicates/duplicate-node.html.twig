@@ -1,0 +1,55 @@
+{% set duplicates = [duplicateNode]|merge(duplicateNode.potentialDuplicates) %}
+{% if duplicates|length > 0 %}
+<table class="duplicate-node"><tbody><tr>
+
+  <td class="duplicates"><ul class="collapsible" data-collapsible="false">
+    {% for duplicate in duplicates %}
+      <li class="collection-item">
+        <div class="collapsible-header">
+          <span class='title'>
+            <span class="name">{{ duplicate.name }}</span>
+            {% if duplicate.sourceKey %} ({{ duplicate.sourceKey }}){% endif %}
+            <span class="updated-at"> - Maj {{ duplicate.updatedAt|date("d/m/Y") }}</span>
+          </span>
+          <div class="actions">
+            <a href="{{ duplicate.showUrlFromController(router)}}" target="_blank" class="btn-edit icon gogo-icon-eye"></a>
+            <a href={{ path('gogo_element_edit', { id: duplicate.id}) }} target="_blank" class="btn-edit icon gogo-icon-edit"></a>
+            <button class="btn-resolve btn btn-success waves-effect waves-light" data-id="{{ duplicate.id }}">Conserver</button>
+            <button class="btn-delete btn btn-danger waves-effect waves-light" data-id="{{ duplicate.id }}">Supprimer</button>
+          </div>
+          {% if duplicate.email %}<div class="link">{{ duplicate.email }}</div>{% endif %}
+          <div class="address">{{ duplicate.address.getFormatedAddress }}</div>
+
+          <div class="options">
+            {% for optionValue in duplicate.optionValues %}
+              <span class="option">{{ optionsNames[optionValue.optionId] }} {% if not loop.last %}, {% endif %}</span>
+            {% endfor %}
+          </div>
+        </div>
+        <div class="collapsible-body">
+          {% for key, data in duplicate.data %}
+            {% if data %}
+            <div class="key-value">
+              <span class="key">{{ key }}</span>
+              <span class="value">
+                {% if data is iterable %}
+                  {% for subkey, subdata in data %}
+                    <br/>{{ subkey }} : {{ subdata|json_encode }}
+                  {% endfor %}
+                {% else %}
+                  {{ data }}
+                {% endif %}
+              </span>
+            </div>
+            {% endif %}
+          {% endfor %}
+        </div>
+      </li>
+    {% endfor %}
+  </ul></td>
+
+  <td class="non-duplicates">
+    <a class="icon gogo-icon-close" data-id="{{ duplicateNode.id }}"></a>
+  </td>
+</tr></tbody></table>
+{% endif %}

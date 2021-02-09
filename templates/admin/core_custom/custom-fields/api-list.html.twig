@@ -1,0 +1,52 @@
+{% import _self as self %}
+
+{% macro apiLink(name, url) %}
+  <tr class="sonata-ba-view-container">
+    <th style="width: 400px; max-width: 40%;">{{ name }}</th>
+    <td>
+      <a href="{{ url }}" target="_blank">{{ url }}</a>
+    </td>
+  </tr>
+{% endmacro %}
+
+<h5>Éléments</h5>
+<div class="box-body table-responsive no-padding table-box">
+  <table class="table">
+  <tbody>
+    {{ self.apiLink("Interface graphique pour construire une api", url('gogo_api_ui')) }}
+    {{ self.apiLink("Rechercher un élement", url('gogo_api_elements_from_text', { 'text': 'votre_texte_de_recherche'})) }}
+    {{ self.apiLink("Un Element (remplacer ID par l'id de l'élement)", url('gogo_api_element_get', { 'id': 'ID'})) }}
+  </tbody>
+  </table>
+</div>
+
+<h5>Taxonomie / Catégories</h5>
+<div class="box-body table-responsive no-padding table-box">
+  <table class="table">
+  <tbody>
+    {{ self.apiLink("Taxonomie", url('gogo_api_taxonomy')) }}
+    {{ self.apiLink("Taxonomie sémantique", url('gogo_api_taxonomy', { '_format': 'jsonld'})) }}
+    {{ self.apiLink("Une Catégorie (remplacer ID par l'id d ela catégorie)", url('gogo_api_taxonomy_show', { 'id': 'ID'})) }}
+    {{ self.apiLink("Liste des options", url('gogo_element_import_available_options')) }}
+    {{ self.apiLink("Liste des options avec correspondance id", url('gogo_api_taxonomy_mapping')) }}
+  </tbody>
+  </table>
+</div>
+
+<h5>Configuration</h5>
+<div class="box-body table-responsive no-padding table-box">
+  <table class="table">
+  <tbody>
+    {{ self.apiLink("GoGoCartoJs config", url('gogo_api_gogocartojs_configuration')) }}
+    {{ self.apiLink("GoGoCarto config", url('gogo_api_configuration')) }}
+  </tbody>
+  </table>
+</div>
+
+<style>
+.box-body.table-box {
+  margin-bottom: 30px;
+  border-top: 3px solid #e4e4e4;
+  border-radius: 4px;
+}
+</style>

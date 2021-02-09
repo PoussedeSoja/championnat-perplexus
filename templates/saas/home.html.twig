@@ -1,0 +1,73 @@
+{% extends "saas/sass-layout.html.twig" %}
+
+{% block title %}GoGoCarto - Des cartes à GoGo{% endblock %}
+{% set pageName = 'home' %}
+
+{% block body %}
+  <section class="title">
+    <h1>GoGoCarto, créez des cartes à GoGo !</h1>
+
+    <iframe class="video-demo" sandbox="allow-same-origin allow-scripts" src="https://video.colibris-outilslibres.org/videos/embed/62279fe4-06d9-4fdc-8e0d-3d5de3c05072" frameborder="0" allowfullscreen></iframe>
+
+    <p>
+      <a href="{{ path('gogo_saas_new_project') }}"><button class="btn new-project">Créer un projet</button></a>
+    </p>
+
+    <p class="secondary-buttons">
+      <a href="https://doc.gogocarto.fr" target="_blank">
+        <button class="btn btn-neutral btn-doc"><i class="fa fa-question"></i>Documentation</button>
+      </a>
+      <a href="https://gitlab.adullact.net/pixelhumain/GoGoCarto" target="_blank">
+        <button class="btn btn-neutral btn-repo"><i class="fa fa-code"></i>Code Source</button>
+      </a>
+      {% if config.saas.donationUrl %}
+      <a href="{{ config.saas.donationUrl }}" target="_blank">
+        <button class="btn btn-neutral btn-donate"><i class="fa fa-heart"></i>Faire un Don</button>
+      </a>
+      {% endif %}
+    </p>
+
+  </section>
+
+  <section class="projects">
+    {% if pinnedProjects|length > 0 %}
+      <h2>Projets mis en avant</h2>
+      <div class="pinned-projects projects-container">
+        {% for project in pinnedProjects %}
+          {% include 'saas/projects/project.html.twig' with {'project' : project } %}
+        {% endfor %}
+      </div>
+    {% endif %}
+    <h2>Tous les projets ({{ projects|length }})</h2>
+    <div class="project-list" id="project-list">
+      <div class="search-container">
+        <input class="search" placeholder="Chercher par nom, par tag" />
+        <button class="sort btn btn-sm btn-neutral" data-sort="published-at-int">Trier par date de publication</button>
+        <button class="sort btn btn-sm btn-neutral" data-sort="size">Trier par nombre de points</button>
+
+      </div>
+      <div class="list projects-container">
+      {% for project in projects %}
+        {% include 'saas/projects/project.html.twig' with {'project' : project } %}
+      {% endfor %}
+      </div>
+      <ul class="pagination"></ul>
+  </section>
+{% endblock %}
+
+{% block javascripts %}
+  <script src="{{ asset('js/list.js?ver=' ~ version) }}"></script>
+  <script>
+  var userList = new List('project-list', {
+    valueNames: [ 'name', 'tags', 'size', 'published-at-int' ],
+    page: 36,
+    pagination: [{
+      paginationClass: "pagination",
+      innerWindow: 1,
+      left: 1,
+      right: 1
+    }]
+  });
+  userList.sort('published-at-int', { order: 'desc'});
+  </script>
+{% endblock %}

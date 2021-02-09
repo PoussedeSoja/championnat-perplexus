@@ -1,0 +1,229 @@
+{# put this hidden input otherwise the elementFomFieldJson is overwritten with blank string #}
+<input type="hidden" id="{{ form.vars.id }}" name="{{ form.vars.full_name }}" value="{{ form.vars.value }}" />
+
+<h3 style="margin-top: -30px">Liste des champs disponibles via le formulaire</h3>
+{% set fields = value|json_decode %}
+
+{% set filterFromType = {
+  'taxonomy': 'taxonomy',
+  'email': 'email',
+  'checkbox': 'text',
+  'checkbox-group': 'tags',
+  'radio-group': 'text',
+  'select': 'text',
+  'date': 'text',
+  'number': 'text',
+  'title': 'text',
+  'text': 'text',
+  'textarea': 'textarea',
+  'address': 'text',
+  'openhours': 'openhours',
+  'separator': 'separator',
+  'header': 'header',
+  'files': 'files',
+  'elements': 'elements'
+}
+%}
+{% set formFields = [] %}
+<table style="width:100%;margin-bottom: 20px;">
+  <tr>
+    <th>Label dans le formulaire</th>
+    <th>Nom du champ</th>
+    <th>Type</th>
+    <th>Exemple de filtre à utiliser</th>
+  </tr>
+
+  {% for field in fields %}
+    {% if field.type in filterFromType|keys %}
+      {% set gogoFilter = filterFromType[field.type] %}
+      {% if field.type == 'text' %}{% set gogoFilter = field.subtype %}{% endif %}
+      {% if gogoFilter in ['text', 'email', 'textarea'] %}
+        {% set gogoFilter = gogoFilter ~ '(label = "' ~ field.label|striptags ~ '")' %}
+      {% endif %}
+      {% set gogoFilter = gogoFilter ? ('|gogo_' ~ gogoFilter) : '' %}
+
+      {% set fieldName = field.name is defined ? field.name : '' %}
+      {% if field.type == 'address' %}{% set fieldName = "address" %}{% endif %}
+      {% if field.type == 'openhours' %}{% set fieldName = "formatedOpenHours" %}{% endif %}
+      {% set formFields = formFields|merge([fieldName]) %}
+
+      {% if field.type == "header" %}
+        {% set fieldTag = '## ' ~ field.label %}
+      {% elseif field.type == "separator" %}
+        {% set fieldTag = '________________________________' %}
+      {% else %}
+        {% set fieldTag = '{{ ' ~ fieldName ~ gogoFilter ~ ' }}' %}
+      {% endif %}
+
+      <tr {% if field.type in ["separator", "header"] %}style="display:none"{% endif %}>
+        <td>{{ field.label|raw }}</td>
+        <td>{{ fieldName }}</td>
+        <td>{{ field.type|capitalize }}</td>
+        <td class="value">{{ fieldTag }}</td>
+      </tr>
+    {% endif %}
+  {% endfor %}
+</table>
+
+{# Get all the fields in the data, and remove the form fields already listed #}
+{% set allFields = form.vars.attr.dataproperties|split(',') %}
+{% set otherFields = [] %}
+{% for field in allFields %}
+  {% if field not in formFields %}{% set otherFields = otherFields|merge([field]) %}{% endif %}
+{% endfor %}
+
+<h3>Champs / Variables fournies par le système</h3>
+
+<table style="margin-bottom: 20px;">
+  <tr>
+    <th>Nom du champ</th>
+    <th>Description</th>
+    <th>Utilisation</th>
+  </tr>
+
+  <tr>
+    <td>categories</td>
+    <td>Liste des noms des catégories de l'élément</td>
+    <td>{% verbatim %}{% if "ma catégorie" in categories %} ... {% endif %}{% endverbatim %}</td>
+  </tr>
+
+  <tr>
+    <td>categoriesFull</td>
+    <td>Liste des catégories complète, inclus l'id, le nom, la description et la position</td>
+    <td>{% verbatim %}
+      {% for category in categoriesFull %}
+        <div>  Id: {{ category.id }}</div>
+        <div>  Nom: {{ category.name }}</div>
+        <div>  Description: {{ category.description }}</div>
+        <div>  Position: {{ category.index }}</div>
+      {% endfor %}
+    {% endverbatim %}</td>
+  </tr>
+
+  <tr>
+    <td>originalAddress</td>
+    <td>L'adresse détaillée avec le code postal, la ville etc...</td>
+    <td>{% verbatim %}
+      {{ originalAddress.streetAddress ~ ' - ' ~ originalAddress.addressLocality ~ ' - ' ~ originalAddress.postalCode ~ ' - ' ~ originalAddress.addressCountry }}
+    {% endverbatim %}</td>
+  </tr>
+
+  <tr>
+    <td>distance</td>
+    <td>Si une adresse a été rentrée, distance entre le point et cette adresse</td>
+    <td>{% verbatim %}{% if distance is defined %} <span>{{ distance }}</span> {% endif %}{% endverbatim %}</td>
+  </tr>
+
+  <tr>
+    <td>status</td>
+    <td><ul>
+    <li>-6: Doublon</li>
+    <li>-4: Supprimé </li>
+    <li>-3: Refusé (votes)  </li>
+    <li>-2: Refusé (admin) </li>
+    <li>-1: En attente (modifs) </li>
+    <li> 0: En attente (ajout)</li>
+    <li> 1: Validé (admin)</li>
+    <li> 2: Validé (votes)</li>
+    <li> 3: Ajouté par admin</li>
+    <li> 4: Modifié par admin</li>
+    <li> 5: Modifié par propriétaire</li>
+    <li> 6: Modifié avec lien direct</li>
+    <li> 7: Importé</li>
+  </ul>
+    </td>
+    <td>{{ '{% if status == 2 %} .... {% endif %}'}}</td>
+  </tr>
+
+  <tr>
+    <td>isPending</td>
+    <td>Raccourci pour status == En attente (modifs ou ajout)</td>
+    <td>{{ '{% if isPending %} ... {% endif %} '}}</td>
+  </tr>
+
+  <tr>
+    <td>isDeleted</td>
+    <td>Raccourci pour status = Refusé ou Supprimé </td>
+    <td>{{ '{% if isDeleted %} ... {% endif %} '}}</td>
+  </tr>
+
+  <tr>
+    <td>colorOptionId</td>
+    <td>L'id de la categorie qui donne la couleur principale de cet élément</td>
+    <td>
+      <div>{{ '<div class="gogo-color-as" option-id="{{colorOptionId}}">Texte de la couleur de la catégorie principale</div>'|e }}</div>
+      <div>{{ '<div class="gogo-bg-color-as" option-id="{{colorOptionId}}">Arrière plan de la couleur de la catégorie principale</div>'|e }}</div>
+      <div>{{ '<div class="gogo-border-color-as" option-id="{{colorOptionId}}">Bordure de la couleur de la catégorie principale</div>'|e }}</div>
+      <div>Vous pouvez aussi utiliser les classes "gogo-soft-color-as" et "gogo-soft-bg-bolor-as"</div>
+    </td>
+  </tr>
+
+  <tr>
+    <td>images</td>
+    <td>Tableau des urls des différentes images</td>
+    <td>Les images sont affichées par default dans la fiche détail et vous n'avez pas besoin d'inclure ce champ. Mais vous pouvez toujours utiliser cette variable selon vos besoins</td>
+  </tr>
+
+  <tr>
+    <td>createdAt</td>
+    <td>Date de la création dans la base de donnée</td>
+    <td>{{ 'Créé le : {{ createdAt }}'}}</td>
+  </tr>
+
+  <tr>
+    <td>updatedAt</td>
+    <td>Date de la dernière mise à jour</td>
+    <td>{{ 'Dernière mise à jour : {{ updatedAt }}'}}</td>
+  </tr>
+
+  <tr>
+    <td>sourceKey</td>
+    <td>Nom de la source de cet élément (peut être vide)</td>
+    <td>{% verbatim %}
+      {% if sourceKey == "Fablab" %}Référencé par http://fablabs.io{% endif %}
+    {% endverbatim %}</td>
+  </tr>
+</table>
+
+{% if otherFields|length %}
+  <h3>Tous les autres champs dans vos données sont aussi disponibles</h3>
+
+  <table style="margin-bottom: 20px;">
+    <tr>
+      <th>Nom du champ</th>
+      <th>Utilisation</th>
+    </tr>
+
+    {% for field in otherFields %}
+      <tr>
+        <td>{{ field }}</td>
+        <td>{{ '{{ ' ~ field ~ ' }}'}}</td>
+      </tr>
+    {% endfor %}
+  </table>
+{% endif %}
+
+<style>
+  td, th {
+    padding: 5px;
+    border: 1px solid #dadada;
+  }
+  th { background-color: #f1f1f1; }
+  #generate-body-template { float: right; }
+</style>
+
+<script>
+  function generateBodyTemplate() {
+    var template = ""
+    $('td.value').each(function() {
+      template += $(this).text() + '\n';
+    })
+    $('textarea[data-id="body-template"]').text(template).change();
+    $('input[type=checkbox].use-markdown').prop('checked', true)
+  }
+  $(document).ready(function() {
+    $('.control-label__text').each(function() {
+      $(this).text($(this).text().replace('Autoriser', "Masquer l'email aux"))
+    })
+  })
+</script>

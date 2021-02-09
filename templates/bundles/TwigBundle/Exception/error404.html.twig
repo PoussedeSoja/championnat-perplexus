@@ -1,0 +1,17 @@
+{% extends "page-layout.html.twig" %}
+
+{% block title %}Erreur 404{% endblock %}
+
+{% set pageName = 'error' %}
+{% set navTitle = "Erreur" %}
+
+{# BODY CONTENT #}
+{% block body_content %}
+
+	<h1>Oops! Une erreur s'est produite</h1>
+
+    <div>
+      La page demandée n'existe pas (ou plus!)...
+    </div>
+
+{% endblock %}

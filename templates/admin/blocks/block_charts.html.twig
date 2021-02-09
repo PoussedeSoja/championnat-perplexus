@@ -1,0 +1,39 @@
+{% extends sonata_block.templates.block_base %}
+
+{% block block %}
+
+    <script src="//code.highcharts.com/4.1.8/highcharts.js"></script>
+    <script src="//code.highcharts.com/4.1.8/modules/exporting.js"></script>
+    <script type="text/javascript">
+        {{ chart(collabResolveChart) }}
+        {{ chart(userInteractChart) }}
+        {{ chart(contribsAddResolvedPie) }}
+        {{ chart(contribsEditResolvedPie) }}
+    </script>
+
+    <div class="chart-container row">
+        <div id="userInteractChart" class="col-md-12 chart-item"></div> 
+        <div id="contribsAddResolvedPie" class="col-lg-4 col-md-6 chart-item small"></div>  
+        <div id="contribsEditResolvedPie" class="col-lg-4 col-md-6 chart-item small"></div>  
+        <div id="collabResolveChart" class="col-lg-4 col-md-12 chart-item small"></div>  
+        {% if customDashboard %}
+            <div class="col-md-12">
+                <div class="box">
+                {{ customDashboard | raw }}
+                </div>
+            </div>  
+        {% endif %}            
+    </div>
+
+    <style>
+        .chart-item {
+            height: 400px;
+            margin-bottom:20px;
+        }
+        .chart-item.small {
+            height: 260px;
+        }
+    </style>
+       
+
+{% endblock %}
